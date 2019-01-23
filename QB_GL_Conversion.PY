@@ -5,7 +5,6 @@ import xlsxwriter as xlwrit
 from pathlib import Path
 
 col_name = ["Account Description","Type","Date","Num","Name","Memo","Split","Amount","Balance"]
-file_loc = "GL_Test.xlsx"
 
 #open excel, add to dataframe, drop blank columns/rows
 def format_file(xcel):
@@ -64,17 +63,11 @@ def open_file(filename):
 		 x = pd.read_excel(filename, index_col = None, header = None)
 		 return x
 	except:
-		input("Error with filename. \nPress any key to exit")
+		input("Error with filename.\n Press any key to exit")
 		quit()
 
 def main():
-
-	#x = open_file(file_loc)
-	usr_path = input("Enter Filename \n")
-	x = open_file(usr_path)
-	
-	format_file(x)
-
+	format_file(open_file(input("Enter Filename \n")))
 	input("Hit any key to continue...")
 
 #Run program
