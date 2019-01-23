@@ -9,6 +9,8 @@ col_name = ["Account Description","Type","Date","Num","Name","Memo","Split","Amo
 #open excel, add to dataframe, drop blank columns/rows
 def format_file(xcel):
 
+	#clean up code with boolean 2D array - mc
+	
 	#Create merged column from Col 1 & Col 2, and delete cols when finished
 	col1_null = xcel[1].isnull()
 	col2_null = xcel[2].isnull()
