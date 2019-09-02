@@ -1,8 +1,6 @@
 
 # open General Ledger from Excel, reformat into a database. 
 import pandas as pd 
-import xlsxwriter as xlwrit
-from pathlib import Path
 
 col_name = ["Account Description","Type","Date","Num","Name","Memo","Split","Amount","Balance"]
 
@@ -49,16 +47,8 @@ def format_file(xcel):
 	xcel = xcel[cols]
 
 	xcel.columns = col_name
-
-	#Write to excel file
-	writer = pd.ExcelWriter("modified GL.xlsx", engine='xlsxwriter')
-	xcel.to_excel(writer,sheet_name='Sheet1')
-
-	wb = writer.book
-	ws = writer.sheets['Sheet1']
-	ws.set_column('A:J', 15)
-
-	wb.close()
+	
+	return xcel
 
 def open_file(filename):
 	try:
@@ -69,7 +59,10 @@ def open_file(filename):
 		quit()
 
 def main():
-	format_file(open_file(input("Enter Filename \n")))
+	file = format_file(open_file(input("Enter Filename \n")))
+	
+	file.to_csv("modified_GL.csv")
+	
 	input("Hit any key to continue...")
 
 #Run program
