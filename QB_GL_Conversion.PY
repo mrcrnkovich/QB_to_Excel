@@ -1,70 +1,71 @@
+""" open General Ledger from Excel, reformat into a database. """
+import pandas as pd
+import numpy as np
+import argparse
 
-# open General Ledger from Excel, reformat into a database. 
-import pandas as pd 
-
-col_name = ["Account Description","Type","Date","Num","Name","Memo","Split","Amount","Balance"]
-
-#open excel, add to dataframe, drop blank columns/rows
-def format_file(xcel):
-
-	#clean up code with boolean 2D array - mc
-	
-	#Create merged column from Col 1 & Col 2, and delete cols when finished
-	col1_null = xcel[1].isnull()
-	col2_null = xcel[2].isnull()
-	col3_null = xcel[3].isnull()
-	newCol = []
-
-	for x in range(col1_null.size):
-
-		if not col1_null[x]:
-			newCol.append(str(xcel.iloc[x, 1]))
-		elif not col2_null[x]:
-			newCol.append(str(xcel.iloc[x, 2]))
-		elif not col3_null[x]:
-			newCol.append(str(xcel.iloc[x, 3]))
-		elif x > 0:
-			newCol.append(newCol[x-1])
-		else:
-			newCol.append("")
+col_name = ["Account Description", "Type", "Date", "Num", "Name",
+            "Memo", "Split", "Amount", "Balance"]
 
 
+def format_file(df, col_name=col_name):
 
-	xcel['Account Description'] = newCol
+    df['Account Description'] = merge_columns(df[[1, 2, 3]])
 
-	#clean up empty columns/rows
-	xcel = xcel.drop([0,1,2,3,4], axis = 1)
-	xcel = xcel.dropna(axis = 0, how='all')
-	xcel = xcel.dropna(axis = 1, how='all')
+    # clean up empty columns/rows
+    df = df.drop(0)
+    df = df.drop([0, 1, 2, 3, 4], axis=1)
+    df = df.dropna(axis=0, thresh=6)
+    df = df.dropna(axis=1, how='all')
 
-	#remove top row (headers) & total rows
-	xcel = xcel.drop(0)
-	xcel = xcel.dropna(axis = 0, thresh = 6)
+    # Reindex Columns
+    cols = df.columns.tolist()
+    cols = cols[-1:] + cols[:-1]
+    df = df[cols]
+    df.columns = col_name
 
-	#Reindex Columns
-	cols = xcel.columns.tolist()
-	cols = cols[-1:] + cols[:-1]
-	xcel = xcel[cols]
+    return df
 
-	xcel.columns = col_name
-	
-	return xcel
+
+def merge_columns(df):
+
+    # Create single column from DataFrame argument. Value in the merged column
+    # will be the first non-NaN value encountered in the row. If the entire row
+    # is NaN, it will fill using the previous value in the merged column.
+
+    temp_df = df.copy()
+    temp_df = temp_df.replace(' ', np.nan)
+    temp_df["mergeColumn"] = [np.nan for _ in df.index]
+
+    for column in temp_df.columns:
+        temp_df["mergeColumn"] = temp_df["mergeColumn"].fillna(temp_df[column])
+
+    return temp_df["mergeColumn"].fillna(method='ffill')
+
 
 def open_file(filename):
-	try:
-		 x = pd.read_excel(filename, index_col = None, header = None)
-		 return x
-	except:
-		input("Error with filename.\n Press any key to exit")
-		quit()
+
+    # try to open filename as Pandas DataFrame, if error, quit.
+    try:
+        df = pd.read_excel(filename, index_col=None, header=None)
+        return df
+    except:
+        print("Error with filename")
+        quit()
+
 
 def main():
-	file = format_file(open_file(input("Enter Filename \n")))
-	
-	file.to_csv("modified_GL.csv")
-	
-	input("Hit any key to continue...")
 
-#Run program
+    parser = argparse.ArgumentParser(
+                description='Location of Excel File to be formatted.')
+    parser.add_argument('file_location', type=str, help='file location')
+    args = parser.parse_args()
+
+    file = format_file(open_file(args.file_location))
+    # consider using Path object for file location, to allow for
+    # more accurate location saving.
+    file.to_csv("modified_GL.csv")
+    print(file)
+
+
 if __name__ == "__main__":
-	main()
+    main()
